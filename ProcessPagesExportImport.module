@@ -334,17 +334,6 @@ class ProcessPagesExportImport extends Process
 			$page = $this->processImportItemToPage($item, $options);
 			if (!$page instanceof NullPage) $qty++;
 			$fieldset->add($this->buildImportItemSummary($item, $page, $options));
-
-			//JP import meta data
-			$metaData = $item['meta'];
-			foreach ($metaData as $key => $item) {
-			$page->meta()->set($key, $item);
-			bd($key);
-			bd($item);
-			}
-			bd($metaData);
-			// END import meta data
-
 		}
 
 		if (!$qty && $fieldset->children()->count() == 0) {
@@ -886,6 +875,18 @@ class ProcessPagesExportImport extends Process
 			$f->collapsed = Inputfield::collapsedYes;
 		} else {
 			if ($options['commit']) $page->message($this->_('Import successful'));
+
+			//JP import meta data
+			if (isset($item['meta']) && $page->id) {
+				foreach ($item['meta'] as $key => $value) {
+					$page->meta()->set($key, $value);
+					bd('save meta:');
+					bd($key);
+					bd($value);
+				}
+			}
+			// END JP import meta data
+
 		}
 
 		foreach (array('errors', 'warnings', 'messages') as $noticeType) {
@@ -1127,19 +1128,27 @@ class ProcessPagesExportImport extends Process
 			// json
 			$json = $exporter->exportJSON($exportPages, $exportOptions);
 
-			//JP add meta
+			//JP export meta
 			$modifyData = json_decode($json, true);
 			foreach ($modifyData['pages'] as $key => $item) {
 				$pageId = $item['settings']['id'];
 				$page = $this->pages->get($pageId);
-				$modifyData['pages'][$key]['meta'] = [];
+				if ($page->id) {
+					$pageMeta = $page->meta()->getArray();
 
-				foreach ($page->meta() as $keyMeta => $item) {
-					$modifyData['pages'][$key]['meta'][$keyMeta] = $item;
+					if ($pageMeta && is_array($pageMeta)) {
+						$modifyData['pages'][$key]['meta'] = [];
+						foreach ($pageMeta as $keyMeta => $value) {
+							if (isset($keyMeta) && isset($value)) {
+								$modifyData['pages'][$key]['meta'][$keyMeta] = $value;
+								bd('export meta: ' . $keyMeta);
+							}
+						}
+					}
 				}
 			}
 			$json = json_encode($modifyData, true);
-			//END JP add meta
+			//END JP export meta
 
 			$form = $this->wire('modules')->get('InputfieldForm');
 			$f = $this->wire('modules')->get('InputfieldTextarea');
