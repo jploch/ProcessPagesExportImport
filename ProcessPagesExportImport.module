@@ -880,9 +880,6 @@ class ProcessPagesExportImport extends Process
 			if (isset($item['meta']) && $page->id) {
 				foreach ($item['meta'] as $key => $value) {
 					$page->meta()->set($key, $value);
-					bd('save meta:');
-					bd($key);
-					bd($value);
 				}
 			}
 			// END JP import meta data
@@ -1141,7 +1138,6 @@ class ProcessPagesExportImport extends Process
 						foreach ($pageMeta as $keyMeta => $value) {
 							if (isset($keyMeta) && isset($value)) {
 								$modifyData['pages'][$key]['meta'][$keyMeta] = $value;
-								bd('export meta: ' . $keyMeta);
 							}
 						}
 					}
